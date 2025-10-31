@@ -1,0 +1,7 @@
+node_modules/
+dist/
+expo-debug.log
+.expo/
+.expo-shared/
+android/
+ios/
