@@ -69,12 +69,46 @@ async def orchestrate_chat(payload: ChatRequest):
         logger.error("No agent responses received")
         raise HTTPException(status_code=500, detail="No agent responses received")
 
-    # Simple orchestration policy: concatenate answers with agent attribution
+    # Intelligent orchestration: pick best response or merge complementary ones
+    # Filter out empty responses
     sources = [
         AgentSource(agent=r["agent"], text=r["text"], confidence=r.get("confidence"))
         for r in responses
+        if r.get("text") and r["text"].strip()  # Only include non-empty responses
     ]
-    reply = "\n\n".join([f"[{s.agent}] {s.text}" for s in sources])
+    
+    # Sort by confidence (highest first)
+    sorted_sources = sorted(sources, key=lambda x: x.confidence or 0, reverse=True)
+    
+    if not sorted_sources:
+        reply = "I'm here to help. How can I assist you today?"
+    elif len(sorted_sources) == 1:
+        # Only one agent responded
+        reply = sorted_sources[0].text
+    else:
+        # Multiple agents responded - use smart merging
+        best = sorted_sources[0]
+        second_best = sorted_sources[1]
+        
+        confidence_gap = (best.confidence or 0) - (second_best.confidence or 0)
+        
+        # If best agent has much higher confidence (>0.2), use only that response
+        if confidence_gap > 0.2:
+            reply = best.text
+            logger.info(f"Using only best agent ({best.agent}) due to high confidence gap: {confidence_gap:.2f}")
+        # If both have similar confidence and both are high (>0.7), merge them
+        elif (best.confidence or 0) > 0.7 and (second_best.confidence or 0) > 0.7 and confidence_gap < 0.1:
+            # Check if responses are significantly different (not generic)
+            if len(best.text) > 100 and len(second_best.text) > 100:
+                reply = best.text + "\n\n" + second_best.text
+                logger.info(f"Merging both high-confidence responses")
+            else:
+                reply = best.text
+                logger.info(f"Using best response, second too similar or generic")
+        else:
+            # Default: use best response only
+            reply = best.text
+            logger.info(f"Using best agent ({best.agent}) with confidence {best.confidence:.2f}")
     
     meta = {
         "count": len(sources),
