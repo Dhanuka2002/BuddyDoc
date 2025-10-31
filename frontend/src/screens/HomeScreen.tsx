@@ -156,7 +156,7 @@ export default function HomeScreen({
             {/* Symptom Log Card */}
             <TouchableOpacity 
               style={styles.actionCard}
-              onPress={() => alert('Symptom Log coming soon!')}
+              onPress={onNavigateToSymptoms}
               activeOpacity={0.8}
             >
               <LinearGradient
@@ -181,7 +181,7 @@ export default function HomeScreen({
             {/* Medication Reminder Card */}
             <TouchableOpacity 
               style={styles.actionCard}
-              onPress={() => alert('Medication Reminders coming soon!')}
+              onPress={onNavigateToMedications}
               activeOpacity={0.8}
             >
               <LinearGradient

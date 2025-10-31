@@ -24,6 +24,10 @@ interface Symptom {
   date: Date;
   notes: string;
   duration: string;
+  location?: string;
+  triggers?: string;
+  temperature?: string;
+  relatedSymptoms?: string[];
 }
 
 export default function SymptomLoggerScreen({ onBack }: SymptomLoggerScreenProps) {
@@ -34,7 +38,16 @@ export default function SymptomLoggerScreen({ onBack }: SymptomLoggerScreenProps
     severity: 'mild' as 'mild' | 'moderate' | 'severe',
     notes: '',
     duration: '',
+    location: '',
+    triggers: '',
+    temperature: '',
   });
+
+  const commonSymptoms = [
+    '🤒 Fever', '🤕 Headache', '😷 Cough', '🤧 Cold/Runny Nose',
+    '🤢 Nausea', '😫 Fatigue', '🤮 Vomiting', '💊 Dizziness',
+    '😣 Body Aches', '😰 Chest Pain', '🫁 Breathing Difficulty', '🤒 Sore Throat'
+  ];
 
   const addSymptom = () => {
     if (!currentSymptom.name.trim()) {
@@ -49,12 +62,15 @@ export default function SymptomLoggerScreen({ onBack }: SymptomLoggerScreenProps
       date: new Date(),
       notes: currentSymptom.notes,
       duration: currentSymptom.duration,
+      location: currentSymptom.location,
+      triggers: currentSymptom.triggers,
+      temperature: currentSymptom.temperature,
     };
 
     setSymptoms(prev => [newSymptom, ...prev]);
     setModalVisible(false);
-    setCurrentSymptom({ name: '', severity: 'mild', notes: '', duration: '' });
-    Alert.alert('Success', 'Symptom logged successfully!');
+    setCurrentSymptom({ name: '', severity: 'mild', notes: '', duration: '', location: '', triggers: '', temperature: '' });
+    Alert.alert('Success', 'Symptom logged successfully! This will help your doctor understand your condition better.');
   };
 
   const deleteSymptom = (id: string) => {
@@ -166,14 +182,35 @@ export default function SymptomLoggerScreen({ onBack }: SymptomLoggerScreenProps
 
                   {symptom.duration ? (
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Duration:</Text>
+                      <Text style={styles.detailLabel}>⏱️ Duration:</Text>
                       <Text style={styles.detailValue}>{symptom.duration}</Text>
+                    </View>
+                  ) : null}
+
+                  {symptom.temperature ? (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>🌡️ Temperature:</Text>
+                      <Text style={styles.detailValue}>{symptom.temperature}</Text>
+                    </View>
+                  ) : null}
+
+                  {symptom.location ? (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>📍 Location:</Text>
+                      <Text style={styles.detailValue}>{symptom.location}</Text>
+                    </View>
+                  ) : null}
+
+                  {symptom.triggers ? (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>⚡ Triggers:</Text>
+                      <Text style={styles.detailValue}>{symptom.triggers}</Text>
                     </View>
                   ) : null}
 
                   {symptom.notes ? (
                     <View style={styles.notesContainer}>
-                      <Text style={styles.notesLabel}>Notes:</Text>
+                      <Text style={styles.notesLabel}>📝 Notes:</Text>
                       <Text style={styles.notesText}>{symptom.notes}</Text>
                     </View>
                   ) : null}
@@ -213,6 +250,20 @@ export default function SymptomLoggerScreen({ onBack }: SymptomLoggerScreenProps
             </View>
 
             <ScrollView style={styles.modalForm}>
+              {/* Quick Select Common Symptoms */}
+              <Text style={styles.inputLabel}>Quick Select (Optional)</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickSelect}>
+                {commonSymptoms.map((symptom, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.quickSymptomButton}
+                    onPress={() => setCurrentSymptom(prev => ({ ...prev, name: symptom.replace(/[🤒🤕😷🤧🤢😫🤮💊😣😰🫁]/g, '').trim() }))}
+                  >
+                    <Text style={styles.quickSymptomText}>{symptom}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
               <Text style={styles.inputLabel}>Symptom Name *</Text>
               <TextInput
                 style={styles.input}
@@ -247,15 +298,40 @@ export default function SymptomLoggerScreen({ onBack }: SymptomLoggerScreenProps
               <Text style={styles.inputLabel}>Duration</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g., 2 hours, 3 days"
+                placeholder="e.g., Started 2 days ago, Ongoing for 3 hours"
                 value={currentSymptom.duration}
                 onChangeText={(text) => setCurrentSymptom(prev => ({ ...prev, duration: text }))}
+              />
+
+              <Text style={styles.inputLabel}>Body Temperature (if applicable)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., 38.5°C or 101.3°F"
+                value={currentSymptom.temperature}
+                onChangeText={(text) => setCurrentSymptom(prev => ({ ...prev, temperature: text }))}
+                keyboardType="decimal-pad"
+              />
+
+              <Text style={styles.inputLabel}>Location/Body Part</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., Right temple, Lower back, Chest"
+                value={currentSymptom.location}
+                onChangeText={(text) => setCurrentSymptom(prev => ({ ...prev, location: text }))}
+              />
+
+              <Text style={styles.inputLabel}>Possible Triggers</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., After eating, Physical activity, Cold weather"
+                value={currentSymptom.triggers}
+                onChangeText={(text) => setCurrentSymptom(prev => ({ ...prev, triggers: text }))}
               />
 
               <Text style={styles.inputLabel}>Additional Notes</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Any additional details..."
+                placeholder="Any other details that might help your doctor (medications taken, what makes it better/worse, etc.)"
                 value={currentSymptom.notes}
                 onChangeText={(text) => setCurrentSymptom(prev => ({ ...prev, notes: text }))}
                 multiline
@@ -570,8 +646,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  quickSelect: {
+    marginBottom: 12,
+  },
+  quickSymptomButton: {
+    backgroundColor: '#F0F0FF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#D0D0FF',
+  },
+  quickSymptomText: {
+    fontSize: 14,
+    color: '#6366F1',
+    fontWeight: '600',
   },
 });

@@ -26,6 +26,10 @@ interface Medication {
   prescribedBy: string;
   notes: string;
   active: boolean;
+  purpose?: string;
+  sideEffects?: string;
+  endDate?: Date;
+  reminderTimes?: string[];
 }
 
 export default function MedicationScreen({ onBack }: MedicationScreenProps) {
@@ -37,7 +41,21 @@ export default function MedicationScreen({ onBack }: MedicationScreenProps) {
     frequency: '',
     prescribedBy: '',
     notes: '',
+    purpose: '',
+    sideEffects: '',
   });
+
+  const commonMedications = [
+    '💊 Panadol (Paracetamol)', '💊 Amoxicillin', '💊 Piriton',
+    '💊 Aspirin', '💊 Ibuprofen', '💊 Omeprazole',
+    '💊 Metformin', '💊 Amlodipine', '💊 Atorvastatin'
+  ];
+
+  const frequencyOptions = [
+    '🕐 Once daily', '🕑 Twice daily', '🕒 Three times daily',
+    '🕓 Four times daily', '🌙 Before bed', '🍽️ With meals',
+    '⏰ Every 4-6 hours', '📅 Weekly', '🔄 As needed'
+  ];
 
   const addMedication = () => {
     if (!currentMed.name.trim()) {
@@ -53,13 +71,15 @@ export default function MedicationScreen({ onBack }: MedicationScreenProps) {
       startDate: new Date(),
       prescribedBy: currentMed.prescribedBy,
       notes: currentMed.notes,
+      purpose: currentMed.purpose,
+      sideEffects: currentMed.sideEffects,
       active: true,
     };
 
     setMedications(prev => [newMed, ...prev]);
     setModalVisible(false);
-    setCurrentMed({ name: '', dosage: '', frequency: '', prescribedBy: '', notes: '' });
-    Alert.alert('Success', 'Medication added successfully!');
+    setCurrentMed({ name: '', dosage: '', frequency: '', prescribedBy: '', notes: '', purpose: '', sideEffects: '' });
+    Alert.alert('Success', '✅ Medication added successfully!\n\nRemember to take it as prescribed and note any side effects.');
   };
 
   const toggleMedicationActive = (id: string) => {
@@ -143,6 +163,9 @@ export default function MedicationScreen({ onBack }: MedicationScreenProps) {
                   </View>
                   <View style={styles.medInfo}>
                     <Text style={styles.medName}>{med.name}</Text>
+                    {med.purpose && (
+                      <Text style={styles.medDetail}>🎯 {med.purpose}</Text>
+                    )}
                     {med.dosage && (
                       <Text style={styles.medDetail}>💉 {med.dosage}</Text>
                     )}
@@ -152,12 +175,15 @@ export default function MedicationScreen({ onBack }: MedicationScreenProps) {
                     {med.prescribedBy && (
                       <Text style={styles.medDetail}>👨‍⚕️ Dr. {med.prescribedBy}</Text>
                     )}
+                    {med.sideEffects && (
+                      <Text style={[styles.medDetail, { color: '#FF6B6B' }]}>⚠️ Side effects: {med.sideEffects}</Text>
+                    )}
                   </View>
                 </View>
 
                 {med.notes && (
                   <View style={styles.notesContainer}>
-                    <Text style={styles.notesLabel}>Notes:</Text>
+                    <Text style={styles.notesLabel}>📝 Important Notes:</Text>
                     <Text style={styles.notesText}>{med.notes}</Text>
                   </View>
                 )}
@@ -255,6 +281,20 @@ export default function MedicationScreen({ onBack }: MedicationScreenProps) {
             </View>
 
             <ScrollView style={styles.modalForm}>
+              {/* Quick Select Common Medications */}
+              <Text style={styles.inputLabel}>Quick Select (Optional)</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickSelect}>
+                {commonMedications.map((med, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.quickMedButton}
+                    onPress={() => setCurrentMed(prev => ({ ...prev, name: med.replace(/💊/g, '').trim() }))}
+                  >
+                    <Text style={styles.quickMedText}>{med}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
               <Text style={styles.inputLabel}>Medication Name *</Text>
               <TextInput
                 style={styles.input}
@@ -263,18 +303,37 @@ export default function MedicationScreen({ onBack }: MedicationScreenProps) {
                 onChangeText={(text) => setCurrentMed(prev => ({ ...prev, name: text }))}
               />
 
+              <Text style={styles.inputLabel}>Purpose/Condition</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., For fever, Blood pressure, Diabetes"
+                value={currentMed.purpose}
+                onChangeText={(text) => setCurrentMed(prev => ({ ...prev, purpose: text }))}
+              />
+
               <Text style={styles.inputLabel}>Dosage</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g., 500mg, 2 tablets"
+                placeholder="e.g., 500mg, 2 tablets, 10ml"
                 value={currentMed.dosage}
                 onChangeText={(text) => setCurrentMed(prev => ({ ...prev, dosage: text }))}
               />
 
               <Text style={styles.inputLabel}>Frequency</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickSelect}>
+                {frequencyOptions.map((freq, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.quickMedButton}
+                    onPress={() => setCurrentMed(prev => ({ ...prev, frequency: freq.replace(/[🕐🕑🕒🕓🌙🍽️⏰📅🔄]/g, '').trim() }))}
+                  >
+                    <Text style={styles.quickMedText}>{freq}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
               <TextInput
                 style={styles.input}
-                placeholder="e.g., Twice daily, Every 8 hours"
+                placeholder="e.g., Twice daily, Every 8 hours, With meals"
                 value={currentMed.frequency}
                 onChangeText={(text) => setCurrentMed(prev => ({ ...prev, frequency: text }))}
               />
@@ -282,15 +341,23 @@ export default function MedicationScreen({ onBack }: MedicationScreenProps) {
               <Text style={styles.inputLabel}>Prescribed By</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Doctor's name"
+                placeholder="e.g., Dr. Silva, General Hospital"
                 value={currentMed.prescribedBy}
                 onChangeText={(text) => setCurrentMed(prev => ({ ...prev, prescribedBy: text }))}
+              />
+
+              <Text style={styles.inputLabel}>Side Effects Experienced</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., Drowsiness, Nausea, None"
+                value={currentMed.sideEffects}
+                onChangeText={(text) => setCurrentMed(prev => ({ ...prev, sideEffects: text }))}
               />
 
               <Text style={styles.inputLabel}>Additional Notes</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Special instructions, side effects to watch, etc."
+                placeholder="Special instructions (e.g., take with food, avoid alcohol, complete full course for antibiotics)"
                 value={currentMed.notes}
                 onChangeText={(text) => setCurrentMed(prev => ({ ...prev, notes: text }))}
                 multiline
@@ -584,5 +651,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  quickSelect: {
+    marginBottom: 12,
+  },
+  quickMedButton: {
+    backgroundColor: '#E6F7FF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#91D5FF',
+  },
+  quickMedText: {
+    fontSize: 14,
+    color: '#0050B3',
+    fontWeight: '600',
   },
 });
