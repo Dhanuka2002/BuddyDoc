@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+.expo-shared/
+web-build/
+*.log
+.env
+.DS_Store
+android/
+ios/

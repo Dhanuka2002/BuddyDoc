@@ -1,0 +1,9 @@
+{
+  "python.defaultInterpreterPath": "C:/Users/HESHAN WITHARANA/OneDrive/Desktop/BuddyDoc/backend/orchestration/.venv/Scripts/python.exe",
+  "python.venvPath": "C:/Users/HESHAN WITHARANA/OneDrive/Desktop/BuddyDoc/backend/orchestration/.venv",
+  "python.analysis.extraPaths": [
+    "./backend/orchestration",
+    "./backend/agent1",
+    "./backend/agent2"
+  ]
+}
