@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import health
+from .routers import chat
 from .orchestrator import router as orchestrator_router
 from .clients.neo4j_client import close_neo4j_client
 
@@ -16,6 +17,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix="/health", tags=["health"])
+app.include_router(chat.router, prefix="/chat", tags=["chat"])
 app.include_router(orchestrator_router, prefix="/orchestrator", tags=["orchestrator"])
 
 
