@@ -35,10 +35,10 @@ class PromptProcessor:
         
         # Initialize LangChain Gemini Pro model
         self.llm = ChatVertexAI(
-            model_name="gemini-1.5-pro",
+            project=self.project_id,
+            model_name="gemini-2.5-pro",
             temperature=0.3,  # Lower temperature for more consistent semantic extraction
             max_output_tokens=2048,
-            project=self.project_id,
             location=self.location
         )
         
